@@ -1,1 +1,47 @@
-https://yourusername.github.io/my-first-game/](https://yourusername.github.io/my-first-game/)
+// 1. Define UNO card properties
+const COLORS = ['Red', 'Yellow', 'Green', 'Blue'];
+const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+
+// 2. Generate the standard 108-card deck
+function createDeck() {
+  const deck = [];
+
+  COLORS.forEach(color => {
+    // One '0' per color
+    deck.push({ color, value: '0' });
+
+    // Two of every other number and action card per color
+    VALUES.slice(1).forEach(value => {
+      deck.push({ color, value });
+      deck.push({ color, value });
+    });
+  });
+
+  // Add Wild cards (4 Wild, 4 Wild Draw 4)
+  for (let i = 0; i < 4; i++) {
+    deck.push({ color: 'Wild', value: 'Wild' });
+    deck.push({ color: 'Wild', value: 'Draw 4' });
+  }
+
+  return deck;
+}
+
+// 3. Shuffle using Fisher-Yates algorithm
+function shuffleDeck(deck) {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
+  }
+  return deck;
+}
+
+// 4. Initialize game state and deal hands
+let deck = shuffleDeck(createDeck());
+
+const playerHand = deck.splice(0, 7);
+const botHand = deck.splice(0, 7);
+const discardPile = [deck.pop()]; // First card placed on discard
+
+console.log("Player's Hand:", playerHand);
+console.log("Bot's Hand:", botHand);
+console.log("Top Card on Discard:", discardPile[discardPile.length - 1]);
