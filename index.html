@@ -1,47 +1,387 @@
-// 1. Define UNO card properties
-const COLORS = ['Red', 'Yellow', 'Green', 'Blue'];
-const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO Card Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-// 2. Generate the standard 108-card deck
-function createDeck() {
-  const deck = [];
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
 
-  COLORS.forEach(color => {
-    // One '0' per color
-    deck.push({ color, value: '0' });
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-    // Two of every other number and action card per color
-    VALUES.slice(1).forEach(value => {
-      deck.push({ color, value });
-      deck.push({ color, value });
-    });
-  });
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
 
-  // Add Wild cards (4 Wild, 4 Wild Draw 4)
-  for (let i = 0; i < 4; i++) {
-    deck.push({ color: 'Wild', value: 'Wild' });
-    deck.push({ color: 'Wild', value: 'Draw 4' });
-  }
+    .game-area {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 40px;
+    }
 
-  return deck;
-}
+    .section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-// 3. Shuffle using Fisher-Yates algorithm
-function shuffleDeck(deck) {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
-  }
-  return deck;
-}
+    .section h2 {
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
 
-// 4. Initialize game state and deal hands
-let deck = shuffleDeck(createDeck());
+    .discard-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+    }
 
-const playerHand = deck.splice(0, 7);
-const botHand = deck.splice(0, 7);
-const discardPile = [deck.pop()]; // First card placed on discard
+    .pile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
 
-console.log("Player's Hand:", playerHand);
-console.log("Bot's Hand:", botHand);
-console.log("Top Card on Discard:", discardPile[discardPile.length - 1]);
+    .pile-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    .card {
+      width: 80px;
+      height: 120px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .card.Red {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .card.Yellow {
+      background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+      color: #000;
+    }
+
+    .card.Green {
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    }
+
+    .card.Blue {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .card.Wild {
+      background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+      font-size: 0.8em;
+    }
+
+    .card-value {
+      font-size: 1.8em;
+      font-weight: bold;
+    }
+
+    .card-color {
+      font-size: 0.7em;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: flex-start;
+    }
+
+    .hand-info {
+      font-size: 0.9em;
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+
+    .deck-info {
+      font-size: 0.9em;
+      opacity: 0.8;
+      text-align: center;
+    }
+
+    .stats {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      text-align: center;
+    }
+
+    .stat {
+      font-size: 1em;
+    }
+
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #f1c40f;
+    }
+
+    .validation {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid #2ecc71;
+      border-radius: 8px;
+      font-size: 0.9em;
+    }
+
+    .validation.error {
+      background: rgba(231, 76, 60, 0.2);
+      border-color: #e74c3c;
+    }
+
+    .validation-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 5px 0;
+    }
+
+    .check-icon {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎴 UNO Card Game</h1>
+
+    <div class="game-area">
+      <!-- Discard and Deck Section -->
+      <div class="section">
+        <h2>Game Table</h2>
+        <div class="discard-section">
+          <div class="pile">
+            <div class="pile-label">Deck Remaining</div>
+            <div class="deck-info" id="deckCount"></div>
+          </div>
+          <div class="pile">
+            <div class="pile-label">Discard Pile</div>
+            <div id="discardCard"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Hand -->
+      <div class="section">
+        <h2>Your Hand</h2>
+        <div class="hand-info" id="playerInfo"></div>
+        <div class="cards-container" id="playerCards"></div>
+      </div>
+
+      <!-- Bot Hand -->
+      <div class="section">
+        <h2>Bot's Hand</h2>
+        <div class="hand-info" id="botInfo"></div>
+        <div class="cards-container" id="botCards"></div>
+      </div>
+
+      <!-- Stats and Validation -->
+      <div class="section">
+        <div class="stats">
+          <div class="stat">
+            <div>Player Cards</div>
+            <div class="stat-value" id="playerCount">0</div>
+          </div>
+          <div class="stat">
+            <div>Bot Cards</div>
+            <div class="stat-value" id="botCount">0</div>
+          </div>
+          <div class="stat">
+            <div>Discard Pile</div>
+            <div class="stat-value" id="discardCount">0</div>
+          </div>
+          <div class="stat">
+            <div>Deck</div>
+            <div class="stat-value" id="deckCountStat">0</div>
+          </div>
+        </div>
+
+        <div class="validation" id="validationBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Define UNO card properties
+    const COLORS = ['Red', 'Yellow', 'Green', 'Blue'];
+    const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Reverse', 'Draw 2'];
+
+    // 2. Generate the standard 108-card deck
+    function createDeck() {
+      const deck = [];
+
+      COLORS.forEach(color => {
+        // One '0' per color
+        deck.push({ color, value: '0' });
+
+        // Two of every other number and action card per color
+        VALUES.slice(1).forEach(value => {
+          deck.push({ color, value });
+          deck.push({ color, value });
+        });
+      });
+
+      // Add Wild cards (4 Wild, 4 Wild Draw 4)
+      for (let i = 0; i < 4; i++) {
+        deck.push({ color: 'Wild', value: 'Wild' });
+        deck.push({ color: 'Wild', value: 'Draw 4' });
+      }
+
+      return deck;
+    }
+
+    // 3. Shuffle using Fisher-Yates algorithm
+    function shuffleDeck(deck) {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
+      }
+      return deck;
+    }
+
+    // 4. Initialize game state and deal hands
+    let deck = shuffleDeck(createDeck());
+
+    const playerHand = deck.splice(0, 7);
+    const botHand = deck.splice(0, 7);
+    const discardPile = [deck.pop()]; // First card placed on discard
+
+    console.log("Player's Hand:", playerHand);
+    console.log("Bot's Hand:", botHand);
+    console.log("Top Card on Discard:", discardPile[discardPile.length - 1]);
+
+    // 5. Validate game state
+    function validateGameState() {
+      const totalCards = playerHand.length + botHand.length + discardPile.length + deck.length;
+
+      const checks = [
+        { label: 'Total Cards', value: totalCards, expected: 108, pass: totalCards === 108 },
+        { label: 'Player Hand', value: playerHand.length, expected: 7, pass: playerHand.length === 7 },
+        { label: 'Bot Hand', value: botHand.length, expected: 7, pass: botHand.length === 7 },
+        { label: 'Discard Pile', value: discardPile.length, expected: 1, pass: discardPile.length === 1 },
+      ];
+
+      return checks;
+    }
+
+    // 6. Create card HTML element
+    function createCardElement(card) {
+      const cardEl = document.createElement('div');
+      cardEl.className = `card ${card.color}`;
+      cardEl.innerHTML = `
+        <div class="card-value">${card.value}</div>
+        <div class="card-color">${card.color}</div>
+      `;
+      return cardEl;
+    }
+
+    // 7. Render all cards
+    function renderGame() {
+      // Render player cards
+      const playerCardsContainer = document.getElementById('playerCards');
+      playerCardsContainer.innerHTML = '';
+      playerHand.forEach(card => {
+        playerCardsContainer.appendChild(createCardElement(card));
+      });
+      document.getElementById('playerInfo').textContent = `${playerHand.length} cards in hand`;
+      document.getElementById('playerCount').textContent = playerHand.length;
+
+      // Render bot cards (back of cards)
+      const botCardsContainer = document.getElementById('botCards');
+      botCardsContainer.innerHTML = '';
+      botHand.forEach(() => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card Blue';
+        cardEl.innerHTML = '<div style="font-size: 1.5em;">🂠</div>';
+        botCardsContainer.appendChild(cardEl);
+      });
+      document.getElementById('botInfo').textContent = `${botHand.length} cards in hand`;
+      document.getElementById('botCount').textContent = botHand.length;
+
+      // Render discard pile
+      const discardCardEl = document.getElementById('discardCard');
+      discardCardEl.innerHTML = '';
+      if (discardPile.length > 0) {
+        discardCardEl.appendChild(createCardElement(discardPile[discardPile.length - 1]));
+      }
+      document.getElementById('discardCount').textContent = discardPile.length;
+
+      // Render deck count
+      document.getElementById('deckCount').textContent = `${deck.length} cards left`;
+      document.getElementById('deckCountStat').textContent = deck.length;
+
+      // Render validation
+      const checks = validateGameState();
+      const validationBox = document.getElementById('validationBox');
+      let html = '<strong>Game State Validation:</strong><br>';
+      let allPass = true;
+
+      checks.forEach(check => {
+        const pass = check.pass;
+        allPass = allPass && pass;
+        html += `
+          <div class="validation-check">
+            <span class="check-icon">${pass ? '✓' : '✗'}</span>
+            <span>${check.label}: ${check.value} ${pass ? '(expected: ' + check.expected + ')' : '(expected: ' + check.expected + ' - MISMATCH)'}</span>
+          </div>
+        `;
+      });
+
+      validationBox.innerHTML = html;
+      validationBox.className = allPass ? 'validation' : 'validation error';
+    }
+
+    // 8. Initialize render
+    renderGame();
+  </script>
+</body>
+</html>
